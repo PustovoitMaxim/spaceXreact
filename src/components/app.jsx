@@ -1,24 +1,47 @@
-import {LaunchList} from "./launchList";
-import {Map} from "./map";
-import {useEffect, useState} from "react";
-import {SpaceX} from "../api/spacex";
+import React, { useEffect, useState } from "react";
+import { getLaunches, getLaunchpads } from "../api/spacex.js";
+import LaunchList from "./LaunchList";
+import Map from "./Map";
 
-function App(){
+export function App() {
+  const [launches, setLaunches] = useState([]);
+  const [launchpads, setLaunchpads] = useState([]);
+  const [highlightPad, setHighlightPad] = useState(null);
 
-    const [launches, setLaunches] = useState([]);
-    const spacex = new SpaceX();
-    useEffect(()=>{
-        spacex.launches().then(data =>{
-            setLaunches(data)
-        })
-    },[])
+  useEffect(() => {
+    console.log("[App] fetching SpaceX data...");
 
-    return(
-        <main className='main'>
-            <LaunchList launches = {launches}/>
-            <Map/>
-        </main>
-    )
+    getLaunches().then(data => {
+      console.log("[App] Loaded launches:", data.length);
+      setLaunches(data);
+    });
+
+    getLaunchpads().then(data => {
+      console.log("[App] Loaded launchpads:", data.length);
+      setLaunchpads(data);
+    });
+  }, []);
+
+  return (
+    <div style={{ display: "flex" }}>
+      <LaunchList 
+        launches={launches} 
+        onHoverLaunch={(launch) => {
+          if (launch) {
+            console.log("[App] Hover launch:", launch.name, "-> pad:", launch.launchpad);
+            setHighlightPad(launch.launchpad);
+          } else {
+            console.log("[App] Hover cleared");
+            setHighlightPad(null);
+          }
+        }}
+      />
+      <Map 
+        launchpads={launchpads} 
+        highlighted={highlightPad} 
+      />
+    </div>
+  );
 }
 
-export {App};
+export default App;
